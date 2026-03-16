@@ -2,9 +2,9 @@ from dotenv import load_dotenv
 import os
 import requests
 from twilio.twiml.messaging_response import MessagingResponse
-import time
-
 from flask import Flask, request
+from scan_parse import *
+
 app = Flask(__name__)
 load_dotenv()
 account_sid = os.getenv('ACCOUNT_SID')
@@ -16,11 +16,11 @@ def webhook():
     if numberOfPic > 0:
         media_url = request.values.get('MediaUrl0', '')
         response = requests.get(media_url, auth=(account_sid, auth_token))
-        print(f"Message received: {response}")
-        print(f"Message received: {media_url}")
-        with open("temp_images/receipt"+ str(time.time()) +".jpg", "wb") as f:
-            f.write(response.content)
-        return "OK", 200
+
+        status = store(response.content)
+        result = MessagingResponse()
+        result.message(status)
+        return str(result)
     else:
         resp = MessagingResponse()
         resp.message("Please send a pictures of receipt")
